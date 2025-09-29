@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { type Link } from '../types';
 
@@ -20,6 +19,11 @@ const useUrlState = (initialState: Link[]): [Link[], (value: React.SetStateActio
   });
 
   useEffect(() => {
+    // In some sandboxed environments (like blob: URLs), history manipulation is restricted.
+    if (window.location.protocol === 'blob:') {
+        return;
+    }
+
     try {
       // We remove the isLoading property before saving to the URL
       const stateToSave = state.map(({ isLoading, ...rest }) => rest);
