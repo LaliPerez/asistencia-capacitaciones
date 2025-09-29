@@ -10,6 +10,8 @@ interface UserDetailsFormProps {
 const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ attendee, setAttendee }) => {
   const sigPad = useRef<SignatureCanvas>(null);
 
+  const inputStyle = "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-100";
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setAttendee(prev => ({...prev, [id]: value }));
@@ -21,7 +23,7 @@ const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ attendee, setAttendee
   };
 
   const saveSignature = () => {
-    if (sigPad.current) {
+    if (sigPad.current && !sigPad.current.isEmpty()) {
       setAttendee(prev => ({ ...prev, signature: sigPad.current.getTrimmedCanvas().toDataURL('image/png') }));
     }
   };
@@ -34,25 +36,25 @@ const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ attendee, setAttendee
                 <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">
                 Full Name
                 </label>
-                <input type="text" id="name" value={attendee.name} onChange={handleChange} className="w-full input-style" required />
+                <input type="text" id="name" value={attendee.name} onChange={handleChange} className={inputStyle} required />
             </div>
             <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1">
                 Email Address
                 </label>
-                <input type="email" id="email" value={attendee.email} onChange={handleChange} className="w-full input-style" required />
+                <input type="email" id="email" value={attendee.email} onChange={handleChange} className={inputStyle} required />
             </div>
             <div>
                 <label htmlFor="dni" className="block text-sm font-medium text-slate-300 mb-1">
                 DNI
                 </label>
-                <input type="text" id="dni" value={attendee.dni} onChange={handleChange} className="w-full input-style" required />
+                <input type="text" id="dni" value={attendee.dni} onChange={handleChange} className={inputStyle} required />
             </div>
             <div>
                 <label htmlFor="company" className="block text-sm font-medium text-slate-300 mb-1">
                 Company
                 </label>
-                <input type="text" id="company" value={attendee.company} onChange={handleChange} className="w-full input-style" required />
+                <input type="text" id="company" value={attendee.company} onChange={handleChange} className={inputStyle} required />
             </div>
         </div>
         <div>
@@ -72,14 +74,5 @@ const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ attendee, setAttendee
     </div>
   );
 };
-
-// Add a shared style for inputs to avoid repetition
-const style = document.createElement('style');
-style.innerHTML = `
-  .input-style {
-    px-3 py-2 bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-100
-  }
-`;
-document.head.appendChild(style);
 
 export default UserDetailsForm;
