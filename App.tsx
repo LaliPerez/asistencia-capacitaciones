@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { type Link, type Attendee, type AttendanceRecord } from './types';
 import useUrlState from './hooks/useUrlState';
 import { fetchTitleForUrl } from './services/geminiService';
-import jspdf from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 import Header from './components/Header';
@@ -121,7 +121,7 @@ const App: React.FC = () => {
     if (reportElement) {
       html2canvas(reportElement, { scale: 2, backgroundColor: '#1e293b' }).then((canvas) => {
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jspdf({
+        const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'px',
           format: [canvas.width, canvas.height]
