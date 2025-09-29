@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Registro de Asistencia a Capacitaciones</title>
+  <title>registro de capacitaciones</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -330,26 +330,26 @@
     // --- MAIN APP COMPONENT ---
     const App = () => {
       const [appState, setAppState] = useState('setup'); // 'setup', 'checklist', 'form'
-      const [files, setFiles] = useState([{ url: '', code: '' }]);
+      const [files, setFiles] = useState([{ url: '' }]);
       const [checklist, setChecklist] = useState([]);
 
       const [records, setRecords] = useState([]);
       const [courseName, setCourseName] = useState('');
 
       useEffect(() => {
-        if (appState === 'checklist' && checklist.length > 0 && checklist.every(file => file.verified)) {
+        if (appState === 'checklist' && checklist.length > 0 && checklist.every(file => file.viewed)) {
           setTimeout(() => setAppState('form'), 1000);
         }
       }, [checklist, appState]);
 
-      const handleFileChange = (index, field, value) => {
+      const handleFileChange = (index, value) => {
         const newFiles = [...files];
-        newFiles[index][field] = value;
+        newFiles[index].url = value;
         setFiles(newFiles);
       };
 
       const handleAddFile = () => {
-        setFiles([...files, { url: '', code: '' }]);
+        setFiles([...files, { url: '' }]);
       };
 
       const handleRemoveFile = (index) => {
@@ -357,36 +357,22 @@
       };
 
       const handleConfirmFiles = () => {
-        const validFiles = files.filter(f => f.url.trim().startsWith('http') && f.code.trim() !== '');
+        const validFiles = files.filter(f => f.url.trim().startsWith('http'));
         if (validFiles.length === 0) {
-          alert('Por favor, ingrese al menos un enlace válido y su palabra clave.');
+          alert('Por favor, ingrese al menos un enlace válido.');
           return;
         }
         setChecklist(validFiles.map((file, index) => ({
-          ...file,
+          url: file.url,
           name: `Archivo de capacitación #${index + 1}`,
-          verified: false,
-          userInput: '',
-          error: false
+          viewed: false,
         })));
         setAppState('checklist');
       };
 
-      const handleChecklistInputChange = (index, value) => {
+      const handleMarkAsViewed = (index) => {
         const newChecklist = [...checklist];
-        newChecklist[index].userInput = value;
-        newChecklist[index].error = false;
-        setChecklist(newChecklist);
-      };
-
-      const handleVerifyCode = (index) => {
-        const newChecklist = [...checklist];
-        if (newChecklist[index].userInput.trim().toLowerCase() === newChecklist[index].code.trim().toLowerCase()) {
-            newChecklist[index].verified = true;
-            newChecklist[index].error = false;
-        } else {
-            newChecklist[index].error = true;
-        }
+        newChecklist[index].viewed = true;
         setChecklist(newChecklist);
       };
 
@@ -433,12 +419,11 @@
       const renderSetup = () => (
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg animate-fade-in max-w-2xl mx-auto">
           <h2 className="text-xl font-bold text-white mb-2">Paso 1: Configurar Archivos</h2>
-          <p className="text-gray-400 mb-4">Ingrese los enlaces del material y una palabra clave para cada uno. La palabra clave debe aparecer al final del contenido para que el asistente la use como verificación.</p>
+          <p className="text-gray-400 mb-4">Ingrese los enlaces del material que los asistentes deben revisar.</p>
           <div className="space-y-4">
             {files.map((file, index) => (
-              <div key={index} className="flex flex-col sm:flex-row items-center gap-2 p-3 bg-gray-700/50 rounded-lg">
-                <input type="url" className="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-blue-500" value={file.url} onChange={(e) => handleFileChange(index, 'url', e.target.value)} placeholder="Enlace del archivo..."/>
-                <input type="text" className="w-full sm:w-48 bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-blue-500" value={file.code} onChange={(e) => handleFileChange(index, 'code', e.target.value)} placeholder="Palabra clave"/>
+              <div key={index} className="flex items-center gap-2 p-3 bg-gray-700/50 rounded-lg">
+                <input type="url" className="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-blue-500" value={file.url} onChange={(e) => handleFileChange(index, e.target.value)} placeholder="Enlace del archivo..."/>
                 <button onClick={() => handleRemoveFile(index)} className="p-2 bg-red-600 text-white rounded-md hover:bg-red-500 disabled:opacity-50" disabled={files.length <= 1}><TrashIcon /></button>
               </div>
             ))}
@@ -453,18 +438,12 @@
       const renderChecklist = () => (
         <div className="bg-gray-800 p-6 rounded-xl shadow-lg animate-fade-in max-w-2xl mx-auto">
           <h2 className="text-xl font-bold text-white mb-2">Paso 2: Revisar Material</h2>
-          <p className="text-gray-400 mb-6">Abra cada enlace, revise el contenido hasta el final y escriba la palabra clave para verificar.</p>
+          <p className="text-gray-400 mb-6">Haga clic en cada enlace para abrirlo. Una vez que se hayan abierto todos, podrá continuar.</p>
           <ul className="space-y-3">
             {checklist.map((file, index) => (
-              <li key={index} className={`p-3 rounded-md transition-all duration-300 ${file.verified ? 'bg-green-800/50' : 'bg-gray-700'}`}>
-                <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-medium">{file.name}</a>
-                {!file.verified && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <input type="text" placeholder="Ingrese la palabra clave" value={file.userInput} onChange={(e) => handleChecklistInputChange(index, e.target.value)} className={`flex-grow bg-gray-600 border rounded-md py-1 px-2 text-white ${file.error ? 'border-red-500' : 'border-gray-500'}`} />
-                      <button onClick={() => handleVerifyCode(index)} className="px-3 py-1 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-500 text-sm">Verificar</button>
-                    </div>
-                )}
-                {file.verified && <div className="flex items-center text-green-400 mt-2"><CheckIcon className="h-5 w-5 mr-2" /> Verificado</div>}
+              <li key={index} className={`p-3 rounded-md transition-all duration-300 flex justify-between items-center ${file.viewed ? 'bg-green-800/50' : 'bg-gray-700'}`}>
+                <a href={file.url} target="_blank" rel="noopener noreferrer" onClick={() => handleMarkAsViewed(index)} className="text-blue-400 hover:underline font-medium">{file.name}</a>
+                {file.viewed && <div className="flex items-center text-green-400"><CheckIcon className="h-5 w-5 mr-2" /> Visto</div>}
               </li>
             ))}
           </ul>
@@ -473,7 +452,7 @@
 
       const renderFormAndTable = () => (
         <>
-          {checklist.every(f => f.verified) && (
+          {checklist.every(f => f.viewed) && (
             <div className="bg-green-800/50 text-green-200 p-4 rounded-lg mb-8 text-center animate-pulse"><p className="font-bold">¡Excelente! El formulario ya está disponible.</p></div>
           )}
           <section className="mb-8 bg-gray-800 p-6 rounded-xl shadow-lg">
