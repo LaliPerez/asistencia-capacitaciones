@@ -23,6 +23,7 @@ const App: React.FC = () => {
   const [attendee, setAttendee] = useState<Attendee>({ name: '', email: '', dni: '', company: '', signature: '' });
   const [attendance, setAttendance] = useState<AttendanceRecord>({});
   const [attendanceError, setAttendanceError] = useState('');
+  const [formKey, setFormKey] = useState(0);
   
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -110,6 +111,8 @@ const App: React.FC = () => {
     });
     setAttendance(initialAttendance);
     setAttendanceError('');
+    // Incrementing the key will force remount of the UserDetailsForm, clearing its internal state (like the signature pad)
+    setFormKey(prevKey => prevKey + 1); 
     setView('attendance');
   }, [links]);
 
@@ -138,8 +141,16 @@ const App: React.FC = () => {
         <div className="container mx-auto max-w-2xl px-4 py-8">
           <Header view={view} />
           <p className="text-center text-slate-400 mb-8">Please provide your details and click each link to mark your attendance.</p>
-          <UserDetailsForm attendee={attendee} setAttendee={setAttendee} />
-          <h2 className="text-xl font-semibold text-slate-100 mt-8 mb-4">Training Links</h2>
+          <UserDetailsForm key={formKey} attendee={attendee} setAttendee={setAttendee} />
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={handleResetAttendance}
+              className="text-sm font-medium text-slate-400 hover:text-white transition-colors px-3 py-1"
+            >
+              Clear Form
+            </button>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-100 mt-6 mb-4">Training Links</h2>
           <AttendanceLinkList links={links} attendance={attendance} setAttendance={setAttendance} />
           {attendanceError && <p className="text-red-400 text-sm mt-4 text-center">{attendanceError}</p>}
           <FinalizeAttendance onClick={handleFinalizeAttendance} disabled={!allLinksChecked || !allDetailsFilled} />
