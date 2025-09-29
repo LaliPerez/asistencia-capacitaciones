@@ -14,6 +14,7 @@ import UserDetailsForm from './components/UserDetailsForm';
 import AttendanceLinkList from './components/AttendanceLinkList';
 import FinalizeAttendance from './components/FinalizeAttendance';
 import AttendanceReport from './components/AttendanceReport';
+import { TrashIcon } from './components/Icons';
 
 const App: React.FC = () => {
   const [links, setLinks] = useUrlState([]);
@@ -100,6 +101,17 @@ const App: React.FC = () => {
     console.log('Checked links:', attendance);
     setView('report');
   };
+  
+  const handleResetAttendance = useCallback(() => {
+    setAttendee({ name: '', email: '', dni: '', company: '', signature: '' });
+    const initialAttendance: AttendanceRecord = {};
+    links.forEach(link => {
+      initialAttendance[link.id] = null;
+    });
+    setAttendance(initialAttendance);
+    setAttendanceError('');
+    setView('attendance');
+  }, [links]);
 
   const handleDownloadPdf = useCallback(() => {
     const reportElement = document.getElementById('report-content');
@@ -146,6 +158,7 @@ const App: React.FC = () => {
               attendance={attendance} 
               attendee={attendee} 
               onDownloadPdf={handleDownloadPdf}
+              onStartOver={handleResetAttendance}
             />
         </div>
       </div>
@@ -169,14 +182,15 @@ const App: React.FC = () => {
         <LinkList links={links} onRemoveLink={handleRemoveLink} />
         
         {links.length > 0 && (
-          <div className="mt-8 flex flex-col items-center gap-4">
-             <button
-              onClick={() => setLinks([])}
-              className="text-sm text-slate-500 hover:text-red-400 transition-colors"
-             >
-              Clear All Links
-             </button>
+          <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
             <ShareButton />
+            <button
+              onClick={() => setLinks([])}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-400 bg-red-900/50 rounded-md hover:bg-red-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500 focus-visible:ring-offset-slate-900"
+            >
+              <TrashIcon className="w-4 h-4" />
+              Clear All Links
+            </button>
           </div>
         )}
       </div>
