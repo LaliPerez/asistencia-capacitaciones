@@ -1,13 +1,29 @@
 import React from 'react';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  view: 'admin' | 'attendance' | 'report';
+}
+
+const Header: React.FC<HeaderProps> = ({ view }) => {
+  const titles = {
+    admin: 'Carga de Capacitaciones',
+    attendance: 'Asistencia a Capacitación',
+    report: 'Reporte de Asistencia'
+  };
+
+  const subtitles = {
+    admin: 'Arrastra y suelta un archivo de texto con enlaces o agrégalos uno por uno.',
+    attendance: 'Completa tus datos y haz clic en cada enlace para registrar tu asistencia.',
+    report: 'Tu asistencia ha sido registrada. Puedes descargar el comprobante en PDF.'
+  }
+
   return (
     <header className="text-center my-8 md:my-12">
       <h1 className="text-4xl md:text-5xl font-bold text-slate-100 tracking-tight">
-        Link Collector
+        {titles[view]}
       </h1>
       <p className="mt-3 text-lg text-slate-400 max-w-2xl mx-auto">
-        Create and share a list of links for your team or class to review.
+        {subtitles[view]}
       </p>
     </header>
   );

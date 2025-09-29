@@ -1,45 +1,46 @@
 import React from 'react';
 import { type Link } from '../types';
+import { CheckIcon } from './Icons';
 
 interface AttendanceLinkItemProps {
   link: Link;
-  isChecked: boolean;
+  record: { timestamp: string } | null;
   onToggle: (id: string) => void;
 }
 
-const AttendanceLinkItem: React.FC<AttendanceLinkItemProps> = ({ link, isChecked, onToggle }) => {
+const AttendanceLinkItem: React.FC<AttendanceLinkItemProps> = ({ link, record, onToggle }) => {
+  const isChecked = record !== null;
+
   return (
-    <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg shadow-sm border border-slate-700">
-      <div className="flex-shrink-0">
-        <img 
-          src={`https://www.google.com/s2/favicons?domain=${link.url}&sz=32`} 
-          alt="favicon"
-          className="w-8 h-8"
-          onError={(e) => (e.currentTarget.style.display = 'none')}
-        />
+    <div className={`flex items-center gap-4 p-4 rounded-lg shadow-sm border transition-all duration-200 ${isChecked ? 'bg-green-900/30 border-green-700/50' : 'bg-slate-800/50 border-slate-700'}`}>
+      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+         {isChecked ? (
+            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">
+                <CheckIcon className="w-5 h-5" />
+            </div>
+         ) : (
+            <img 
+              src={`https://www.google.com/s2/favicons?domain=${link.url}&sz=32`} 
+              alt="favicon"
+              className="w-8 h-8"
+              onError={(e) => (e.currentTarget.style.display = 'none')}
+            />
+         )}
       </div>
       <div className="flex-1 min-w-0">
         <a
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => onToggle(link.id)}
           className="font-semibold text-slate-100 truncate block hover:text-sky-400 focus:outline-none focus-visible:underline"
         >
           {link.title}
         </a>
         <p className="text-sm text-slate-400 truncate">{link.url}</p>
-      </div>
-      <div className="flex-shrink-0">
-        <label htmlFor={`attendance-${link.id}`} className="flex items-center space-x-2 cursor-pointer p-2">
-           <input
-            id={`attendance-${link.id}`}
-            type="checkbox"
-            checked={isChecked}
-            onChange={() => onToggle(link.id)}
-            className="h-5 w-5 rounded bg-slate-700 border-slate-600 text-sky-500 focus:ring-sky-500"
-          />
-           <span className="sr-only">Mark as reviewed</span>
-        </label>
+        {isChecked && (
+            <p className="text-xs text-green-400 mt-1">Completed: {record.timestamp}</p>
+        )}
       </div>
     </div>
   );

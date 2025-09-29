@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { type Link } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { type Link, type Attendee, type AttendanceRecord } from './types';
 import useUrlState from './hooks/useUrlState';
 import { fetchTitleForUrl } from './services/geminiService';
+import jspdf from 'jspdf';
+import html2canvas from 'html2canvas';
 
 import Header from './components/Header';
-import LinkInputForm from './components/LinkInputForm';
 import LinkList from './components/LinkList';
 import ShareButton from './components/ShareButton';
 import LinkDropzone from './components/LinkDropzone';
+import LinkInputForm from './components/LinkInputForm';
 import UserDetailsForm from './components/UserDetailsForm';
 import AttendanceLinkList from './components/AttendanceLinkList';
 import FinalizeAttendance from './components/FinalizeAttendance';
@@ -17,10 +19,8 @@ const App: React.FC = () => {
   const [links, setLinks] = useUrlState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<'admin' | 'attendance' | 'report'>('admin');
-  const [attendee, setAttendee] = useState({ name: '', email: '' });
-  const [attendeeName, setAttendeeName] = useState('');
-  const [attendeeEmail, setAttendeeEmail] = useState('');
-  const [attendance, setAttendance] = useState<Record<string, boolean>>({});
+  const [attendee, setAttendee] = useState<Attendee>({ name: '', email: '', dni: '', company: '', signature: '' });
+  const [attendance, setAttendance] = useState<AttendanceRecord>({});
   const [attendanceError, setAttendanceError] = useState('');
   
   useEffect(() => {
@@ -31,6 +31,19 @@ const App: React.FC = () => {
       setView('admin');
     }
   }, []);
+
+  useEffect(() => {
+    // Initialize attendance record when links are loaded in attendance view
+    if (view === 'attendance') {
+      setAttendance(prev => {
+        const newRecord: AttendanceRecord = {};
+        links.forEach(link => {
+          newRecord[link.id] = prev[link.id] || null;
+        });
+        return newRecord;
+      });
+    }
+  }, [links, view]);
 
   const handleAddLinks = async (urls: string[]) => {
     setIsLoading(true);
@@ -69,35 +82,55 @@ const App: React.FC = () => {
   };
   
   const handleFinalizeAttendance = () => {
-    if (!attendeeName.trim() || !attendeeEmail.trim()) {
-      setAttendanceError('Please fill out both name and email.');
+    setAttendanceError('');
+    if (Object.values(attendee).some(val => val.trim() === '')) {
+      setAttendanceError('Please fill out all your details, including the signature.');
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(attendeeEmail)) {
+    if (!/\S+@\S+\.\S+/.test(attendee.email)) {
         setAttendanceError('Please enter a valid email address.');
         return;
     }
-    setAttendanceError('');
-
-    const userDetails = { name: attendeeName, email: attendeeEmail };
-    setAttendee(userDetails);
-    // In a real app, you would send this data to a server.
-    // For this example, we'll just switch to a report view.
-    console.log('Attendance finalized for:', userDetails);
+    if (links.some(link => !attendance[link.id])) {
+        setAttendanceError('Please review all links before submitting.');
+        return;
+    }
+    
+    console.log('Attendance finalized for:', attendee);
     console.log('Checked links:', attendance);
     setView('report');
   };
+
+  const handleDownloadPdf = useCallback(() => {
+    const reportElement = document.getElementById('report-content');
+    if (reportElement) {
+      html2canvas(reportElement, { scale: 2, backgroundColor: '#1e293b' }).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jspdf({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`Asistencia-${attendee.name.replace(' ', '_')}.pdf`);
+      });
+    }
+  }, [attendee.name]);
+
+  const allLinksChecked = links.length > 0 && links.every(link => !!attendance[link.id]);
+  const allDetailsFilled = attendee.name && attendee.email && attendee.dni && attendee.company && attendee.signature;
 
   if (view === 'attendance') {
     return (
       <div className="bg-slate-900 text-slate-100 min-h-screen font-sans">
         <div className="container mx-auto max-w-2xl px-4 py-8">
-          <Header />
-          <p className="text-center text-slate-400 mb-8">Please provide your details and confirm you have reviewed each link.</p>
+          <Header view={view} />
+          <p className="text-center text-slate-400 mb-8">Please provide your details and click each link to mark your attendance.</p>
+          <UserDetailsForm attendee={attendee} setAttendee={setAttendee} />
+          <h2 className="text-xl font-semibold text-slate-100 mt-8 mb-4">Training Links</h2>
           <AttendanceLinkList links={links} attendance={attendance} setAttendance={setAttendance} />
-          <UserDetailsForm name={attendeeName} setName={setAttendeeName} email={attendeeEmail} setEmail={setAttendeeEmail} />
           {attendanceError && <p className="text-red-400 text-sm mt-4 text-center">{attendanceError}</p>}
-          <FinalizeAttendance onClick={handleFinalizeAttendance} disabled={!attendeeName || !attendeeEmail} />
+          <FinalizeAttendance onClick={handleFinalizeAttendance} disabled={!allLinksChecked || !allDetailsFilled} />
         </div>
       </div>
     );
@@ -105,10 +138,15 @@ const App: React.FC = () => {
   
   if (view === 'report') {
      return (
-      <div className="bg-slate-900 text-slate-100 min-h-screen font-sans">
+      <div className="bg-slate-900 text-slate-100 min-h-screen font-sans flex items-center justify-center">
         <div className="container mx-auto max-w-2xl px-4 py-8">
-            <Header />
-            <AttendanceReport links={links} attendance={attendance} attendee={attendee} />
+            <Header view={view} />
+            <AttendanceReport 
+              links={links} 
+              attendance={attendance} 
+              attendee={attendee} 
+              onDownloadPdf={handleDownloadPdf}
+            />
         </div>
       </div>
     );
@@ -117,7 +155,7 @@ const App: React.FC = () => {
   return (
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans">
       <div className="container mx-auto max-w-2xl px-4 py-8">
-        <Header />
+        <Header view={view} />
         <div className="mb-8">
           <LinkDropzone onAddLinks={handleAddLinks} isLoading={isLoading} />
           <div className="relative flex items-center my-4">
@@ -131,7 +169,13 @@ const App: React.FC = () => {
         <LinkList links={links} onRemoveLink={handleRemoveLink} />
         
         {links.length > 0 && (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex flex-col items-center gap-4">
+             <button
+              onClick={() => setLinks([])}
+              className="text-sm text-slate-500 hover:text-red-400 transition-colors"
+             >
+              Clear All Links
+             </button>
             <ShareButton />
           </div>
         )}
