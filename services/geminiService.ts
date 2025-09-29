@@ -1,16 +1,32 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 const API_KEY = process.env.API_KEY;
+let ai: GoogleGenAI | null = null;
 
-if (!API_KEY) {
-  // This is a fallback for development. In a real environment, the key should be set.
-  console.warn("API_KEY environment variable not set. Using a placeholder.");
+if (API_KEY) {
+  try {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
+  } catch (error) {
+    console.error("Failed to initialize GoogleGenAI, AI features will be disabled.", error);
+    ai = null;
+  }
+} else {
+  console.warn("API_KEY environment variable not set. AI title fetching will be disabled. The app will use hostnames as titles.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY || " " });
-
 export const fetchTitleForUrl = async (url: string): Promise<string> => {
+  const fallbackTitle = () => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return "Invalid URL";
+    }
+  };
+
+  if (!ai) {
+    return fallbackTitle();
+  }
+
   try {
     const prompt = `Please provide a concise and clear title for the webpage at the following URL: ${url}. 
     Focus on the main heading or the most prominent title on the page. 
@@ -26,20 +42,13 @@ export const fetchTitleForUrl = async (url: string): Promise<string> => {
     });
 
     const title = response.text.trim();
-    // A simple check to ensure we got a reasonable title
     if (title && title.length > 2) {
       return title;
     }
-    // Fallback to domain name if Gemini returns an empty or very short response
-    return new URL(url).hostname;
+    return fallbackTitle();
 
   } catch (error) {
     console.error("Error fetching title from Gemini API:", error);
-    // Fallback to domain name on error
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return "Invalid URL";
-    }
+    return fallbackTitle();
   }
 };
