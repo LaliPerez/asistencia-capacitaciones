@@ -7,9 +7,10 @@ interface AttendanceReportProps {
   attendance: AttendanceRecord;
   attendee: Attendee;
   onDownloadPdf: () => void;
+  onStartOver: () => void;
 }
 
-const AttendanceReport: React.FC<AttendanceReportProps> = ({ links, attendance, attendee, onDownloadPdf }) => {
+const AttendanceReport: React.FC<AttendanceReportProps> = ({ links, attendance, attendee, onDownloadPdf, onStartOver }) => {
 
     return (
         <div className="bg-slate-800/50 rounded-lg border border-slate-700">
@@ -55,12 +56,18 @@ const AttendanceReport: React.FC<AttendanceReportProps> = ({ links, attendance, 
                     </ul>
                 </div>
             </div>
-            <div className="p-6 border-t border-slate-700">
+            <div className="p-6 border-t border-slate-700 space-y-4">
                  <button
                     onClick={onDownloadPdf}
                     className="w-full px-4 py-3 font-semibold text-white bg-sky-600 rounded-md hover:bg-sky-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 focus-visible:ring-offset-slate-900"
                   >
                     Download PDF Report
+                </button>
+                 <button
+                    onClick={onStartOver}
+                    className="w-full px-4 py-2 font-semibold text-slate-300 bg-transparent border border-slate-600 rounded-md hover:bg-slate-700 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 focus-visible:ring-offset-slate-900"
+                  >
+                    Register Another Person
                 </button>
             </div>
         </div>
