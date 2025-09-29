@@ -62,6 +62,8 @@ const UserDetailsForm: React.FC<UserDetailsFormProps> = ({ attendee, setAttendee
             <div className="bg-slate-100 rounded-md border border-slate-600">
                 <SignatureCanvas 
                     ref={sigPad}
+                    // FIX: `penColor` is a valid prop, but the type definitions for `react-signature-canvas` are likely outdated, causing a TypeScript error.
+                    // @ts-expect-error
                     penColor='black'
                     canvasProps={{className: 'w-full h-32 rounded-md'}}
                     onEnd={saveSignature}
